@@ -60,7 +60,7 @@ router.get('/payWay', function(req, res, next) {
   const {start, end} = req.query
   const message={}
   if(start === ''){
-    connect(`select * from orders where payWay=1`, function(err, rows){
+    connect(`select * from orders where payWay=1 and orderStatus=1`, function(err, rows){
       const totalPrice = rows.reduce((pre,cur) => {
         return pre+cur.totalPrice
       },0);
@@ -68,7 +68,7 @@ router.get('/payWay', function(req, res, next) {
         num:rows.length,
         totalPrice
       }
-      connect(`select * from orders where payWay=2`, function(err, rows){
+      connect(`select * from orders where payWay=2 and orderStatus=1`, function(err, rows){
         const totalPrice = rows.reduce((pre,cur) => {
           return pre+cur.totalPrice
         },0);
@@ -76,7 +76,7 @@ router.get('/payWay', function(req, res, next) {
           num:rows.length,
           totalPrice
         }
-        connect(`select * from orders where payWay=3`, function(err, rows){
+        connect(`select * from orders where payWay=3 and orderStatus=1`, function(err, rows){
           const totalPrice = rows.reduce((pre,cur) => {
             return pre+cur.totalPrice
           },0);
@@ -90,7 +90,7 @@ router.get('/payWay', function(req, res, next) {
       })
     })
   }else{
-    connect(`select * from orders where payWay=1 and date(payMentTime) between '${start}' and '${end}'`, function(err, rows){
+    connect(`select * from orders where (payWay=1 and date(createTime) between '${start}' and '${end}') and orderStatus=1`, function(err, rows){
       const totalPrice = rows.reduce((pre,cur) => {
         return pre+cur.totalPrice
       },0);
@@ -99,7 +99,7 @@ router.get('/payWay', function(req, res, next) {
         totalPrice
       }
       console.log(rows);
-      connect(`select * from orders where payWay=2 and date(payMentTime) between '${start}' and '${end}'`, function(err, rows){
+      connect(`select * from orders where (payWay=2 and date(createTime) between '${start}' and '${end}') and orderStatus=1`, function(err, rows){
         const totalPrice = rows.reduce((pre,cur) => {
           return pre+cur.totalPrice
         },0);
@@ -107,7 +107,7 @@ router.get('/payWay', function(req, res, next) {
           num:rows.length,
           totalPrice
         }
-        connect(`select * from orders where payWay=3 and date(payMentTime) between '${start}' and '${end}'`, function(err, rows){
+        connect(`select * from orders where (payWay=3 and date(createTime) between '${start}' and '${end}') and orderStatus=1`, function(err, rows){
           const totalPrice = rows.reduce((pre,cur) => {
             return pre+cur.totalPrice
           },0);
@@ -126,16 +126,16 @@ router.get('/payWay', function(req, res, next) {
 // 根据时间查询订单
 router.get('/payMentTime', function(req, res, next) {
   const result=[]
-  connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(payMentTime,'%Y-%m-%d') as time from orders where orderStatus =1 group by time`,function(err,row){
+  connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(createTime,'%Y-%m-%d') as time from orders where orderStatus =1 group by time`,function(err,row){
     
       if (err) throw err
       result.push(row)
-      connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(payMentTime,'%Y-%m-%d') as time from orders where orderStatus =1 and payWay =1 group by time`,function(err,row1){
+      connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(createTime,'%Y-%m-%d') as time from orders where orderStatus =1 and payWay =1 group by time`,function(err,row1){
 
         result.push(row1)
-        connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(payMentTime,'%Y-%m-%d') as time from orders where orderStatus =1 and payWay =2 group by time`,function(err,row2){
+        connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(createTime,'%Y-%m-%d') as time from orders where orderStatus =1 and payWay =2 group by time`,function(err,row2){
           result.push(row2)
-          connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(payMentTime,'%Y-%m-%d') as time from orders where orderStatus =1 and payWay =3 group by time`,function(err,row3){
+          connect(`select SUM(totalPrice) as totalPrice,DATE_FORMAT(createTime,'%Y-%m-%d') as time from orders where orderStatus =1 and payWay =3 group by time`,function(err,row3){
             result.push(row3)
             res.json(result)
           })
@@ -169,15 +169,34 @@ router.get('/searchOrdersByTime', function(req, res, next) {
     }
   }else{
     if(payWay==0){
-      sql=`select * from orders where date(payMentTime) between '${start}' and '${end}'`
+      sql=`select * from orders where date(createTime) between '${start}' and '${end}'`
     }else{
-      sql=`select * from orders where date(payMentTime) between '${start}' and '${end}' and payWay=${payWay}`
+      sql=`select * from orders where date(createTime) between '${start}' and '${end}' and payWay=${payWay}`
     }
   }
   connect(sql, function(err, rows){
     if (err) throw err
     // console.log(rows);
     res.json(rows)
-})
+  })
+});
+
+// 退货
+router.post('/returnGoods', function(req, res, next) {
+  const { orderNum } = req.body
+  connect(`update orders set orderStatus=2 where orderNum ='${orderNum}'`, function(err, rows){
+      if (err) throw err
+    connect(`select * from orderDetails where orderNum= '${orderNum}'`, function(err, row){
+        if (err) throw err
+        row.forEach(item => {
+          connect(`update goods set stocks=stocks+${item.goodsNum} where goodsId=${item.goodsId}`, function(err, rows){
+            if (err) throw err
+          })
+        });
+        res.json({
+          status: 200
+        })
+    })
+  })
 });
 module.exports = router;
