@@ -6,7 +6,7 @@ const { connect } =  require('./../../connect/index')
 const time =  require('./../../utils/addTime')
 
 
-router.get('/', function(req, res, next) {
+router.get('/search', function(req, res, next) {
     connect('select * from categories',function(err, rows){
         if (err) throw err
         res.json(rows)
@@ -34,4 +34,5 @@ router.post('/edit', function(req, res, next) {;
         res.json(rows) 
     })
 });
+
 module.exports = router;
