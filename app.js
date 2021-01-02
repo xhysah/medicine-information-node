@@ -14,7 +14,6 @@ var orders = require('./routes/orders/index')
 var orderDetails = require('./routes/orderDetails/index');
 
 var app = express();
-var router = express.Router();
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -29,8 +28,8 @@ app.all('*', function (req, res, next) {
     next()
 });
 
-
-router.all('*', function(req, res, next){
+app.use('/users', usersRouter);
+app.all('*', function(req, res, next){
     const token = req.header('Authorization')
     if(token == null){
         if(req.originalUrl == '/users'){
@@ -39,15 +38,17 @@ router.all('*', function(req, res, next){
             res.end('请重新登陆')
         }
     }else{
-        console.log('hgggg');
         jwt.verify(token,'userKey',(error,decode)=>{
-            if(error) throw error
-            next()
+            if(error){
+                res.end('请重新登陆') 
+            }else{
+                next()
+            } 
         })
     }
 })
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 app.use('/categories', categoriesRouter);
 app.use('/goods', goodsRouter);
 app.use('/upload', upload);

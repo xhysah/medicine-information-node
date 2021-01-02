@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const jwt = require('jsonwebtoken');
 const { connect } =  require('./../connect/index')
+const time = require('./../utils/addTime')
 
 
 /* post users listing. */
@@ -43,7 +44,8 @@ router.post('/register', function(req, res, next) {
       })
     
     }else{
-      connect(`insert into users (username,password,role)values('${username}','${password}', ${role})`,function(err, rows){
+      const createTime = time()
+      connect(`insert into users (username,password,createTime,role)values('${username}','${password}', '${createTime}',${role})`,function(err, rows){
         if (err) throw err
           res.json({
             message: '注册成功',
@@ -51,6 +53,20 @@ router.post('/register', function(req, res, next) {
           })
       })
     }
+  })
+});
+router.get('/search', function(req, res, next) {
+  connect(`select username,role,createTime from users`,function(err, rows){
+    if (err) throw err
+    res.json(rows)
+  })
+});
+
+router.get('/delete', function(req, res, next) {
+  const { username } = req.query
+  connect(`delete from users where username = '${username}'`,function(err, rows){
+    if (err) throw err
+    res.json(rows)
   })
 });
 module.exports = router;
