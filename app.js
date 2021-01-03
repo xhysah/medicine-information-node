@@ -48,7 +48,6 @@ app.all('*', function(req, res, next){
     }
 })
 app.use('/', indexRouter);
-
 app.use('/categories', categoriesRouter);
 app.use('/goods', goodsRouter);
 app.use('/upload', upload);
