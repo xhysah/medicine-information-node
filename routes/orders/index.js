@@ -28,8 +28,7 @@ router.post('/add', function(req, res, next) {
 router.post('/update', function(req, res, next) {
   const { orderNum, orderStatus, payWay, shoppingCartList} = req.body
   
-  const payMentTime = time()
-    connect(`update orders set orderStatus=${orderStatus},payWay=${payWay}, payMentTime='${payMentTime}' where orderNum='${orderNum}'`,function(err, rows){
+    connect(`update orders set orderStatus=${orderStatus},payWay=${payWay} where orderNum='${orderNum}'`,function(err, rows){
         if (err) throw err
         if(orderStatus ===1){
           function fn(err, rows){
