@@ -50,3 +50,7 @@ create table users (
     createTime varchar(50) not null,
     role int(10)
 )CHARSET=utf8;
+use my_db;
+select * from goods
+use my_db;
+update goods set salesNum = 0 
